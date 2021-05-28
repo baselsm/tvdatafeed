@@ -141,10 +141,15 @@ class TvDatafeed:
                 pickle.dump({'date': datetime.date.today(), 'token': token}, f)
             logger.debug('token saved successfully')
             driver.quit()
-            return token
+            
         except Exception as e:
-            print(f'error {e}')
+            logger.warn(f'error {e}')
             driver.quit()
+            token="unauthorized_user_token"
+        return token
+            
+            
+            
 
     def clear_cache(self):
 
