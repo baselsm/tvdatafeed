@@ -10,7 +10,7 @@ This module is installed via pip:
 pip install --upgrade --no-cache-dir git+https://github.com/StreamAlpha/tvdatafeed.git@develop
 ```
 
-For instructions watch this video-
+For usage instructions watch this video-
 
 [![Watch the video](https://img.youtube.com/vi/qDrXmb2ZRjo/hqdefault.jpg)](https://youtu.be/qDrXmb2ZRjo)
 
@@ -34,15 +34,11 @@ tv=TvDatafeed(username, password, chromedriver_path=None)
 
 ```
 
-
-
 You may use without logging in, but in that case tradingview may limit the symbols and some symbols might not be available. To use it without logging in
 
 ```
 tv = TvDatafeed()
 ```
-
-
 
 To download the data use `tv.get_hist` method.
 
