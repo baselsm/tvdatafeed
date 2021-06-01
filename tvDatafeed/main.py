@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 class Interval(enum.Enum):
     in_1_minute = '1'
     in_3_minute = '3'
-    in_5_minute = '4'
+    in_5_minute = '5'
     in_15_minute = '15'
     in_30_minute = '30'
     in_45_minute = '45'
@@ -29,9 +29,9 @@ class Interval(enum.Enum):
     in_2_hour = '2H'
     in_3_hour = '3H'
     in_4_hour = '4H'
-    in_daily = 'D'
-    in_weekly = 'W'
-    in_monthly = 'M'
+    in_daily = '1D'
+    in_weekly = '1W'
+    in_monthly = '1M'
 
 
 class TvDatafeed:
@@ -141,15 +141,12 @@ class TvDatafeed:
                 pickle.dump({'date': datetime.date.today(), 'token': token}, f)
             logger.debug('token saved successfully')
             driver.quit()
-            
+
         except Exception as e:
             logger.warn(f'error {e}')
             driver.quit()
-            token="unauthorized_user_token"
+            token = "unauthorized_user_token"
         return token
-            
-            
-            
 
     def clear_cache(self):
 
@@ -157,34 +154,38 @@ class TvDatafeed:
         shutil.rmtree(self.path)
         print('cache cleared')
 
-    def __init__(self, username, password, chromedriver_path=None) -> None:
+    def __init__(self, username=None, password=None, chromedriver_path=None) -> None:
         self.chromedriver_path = chromedriver_path
         self.__assert_dir()
 
         # read if token exists
         tokenfile = os.path.join(self.path, 'token')
-        token = None
+        token = 'unauthorized_user_token'
 
-        if os.path.exists(tokenfile):
-            with open(tokenfile, 'rb')as f:
-                contents = pickle.load(f)
+        if username is not None and password is not None:
+            if os.path.exists(tokenfile):
+                with open(tokenfile, 'rb')as f:
+                    contents = pickle.load(f)
 
-            if contents['username'] == username and contents['password'] == password and contents['date'] == datetime.date.today():
-                token = contents['token']
-            self.chromedriver_path = contents['chromedriver_path']
+                if contents['username'] == username and contents['password'] == password and contents['date'] == datetime.date.today():
+                    token = contents['token']
+                self.chromedriver_path = contents['chromedriver_path']
 
-        if token is None:
-            if self.chromedriver_path is None or not os.path.exists(self.chromedriver_path):
-                if input('\nchromedriver not found. do you want to autoinstall chromedriver?? y/n').lower() == 'y':
-                    self.__install_chromedriver()
+            if token is None:
+                if self.chromedriver_path is None or not os.path.exists(self.chromedriver_path):
+                    if input('\nchromedriver not found. do you want to autoinstall chromedriver?? y/n').lower() == 'y':
+                        self.__install_chromedriver()
 
-            token = self.__get_token(
-                username, password, self.chromedriver_path)
-            contents = dict(username=username, password=password,
-                            token=token, date=datetime.date.today(), chromedriver_path=self.chromedriver_path)
+                token = self.__get_token(
+                    username, password, self.chromedriver_path)
+                contents = dict(username=username, password=password,
+                                token=token, date=datetime.date.today(), chromedriver_path=self.chromedriver_path)
 
-            with open(tokenfile, 'wb')as f:
-                pickle.dump(contents, f)
+                with open(tokenfile, 'wb')as f:
+                    pickle.dump(contents, f)
+        else:
+            logger.warn(
+                'you are using nologin method, data you access may be limited')
 
         self.token = token
         self.ws = None
@@ -331,3 +332,7 @@ class TvDatafeed:
                 break
 
         return self.__create_df(raw_data, symbol)
+
+    # TODO: send_to_amibroker:
+
+    # TODO: login using requests
