@@ -1,8 +1,0 @@
-README.md
-setup.py
-tvDatafeed/__init__.py
-tvDatafeed/main.py
-tvdatafeed.egg-info/PKG-INFO
-tvdatafeed.egg-info/SOURCES.txt
-tvdatafeed.egg-info/dependency_links.txt
-tvdatafeed.egg-info/top_level.txt
