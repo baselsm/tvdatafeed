@@ -7,7 +7,7 @@ A simple TradingView historical Data Downloader
 This module is installed via pip:
 
 ```
-pip install --upgrade --no-cache-dir git+https://github.com/StreamAlpha/tvdatafeed.git@develop
+pip install --upgrade --no-cache-dir git+https://github.com/StreamAlpha/tvdatafeed.git
 ```
 
 For usage instructions watch this video-
