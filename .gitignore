@@ -1,0 +1,17 @@
+.vscode
+dist
+build
+*.egg-info/
+*.egg
+MANIFEST
+
+.ipynb_checkpoints
+*.pyc
+
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/

@@ -18,6 +18,12 @@ from websocket import create_connection
 logger = logging.getLogger(__name__)
 
 
+def kill_chromedriver():
+    stream = os.popen("taskkill /F /IM chromedriver.exe /T")
+    output = stream.read()
+    logger.warning(output)
+
+
 class Interval(enum.Enum):
     in_1_minute = "1"
     in_3_minute = "3"
@@ -48,6 +54,10 @@ class TvDatafeed:
                 == "y"
             ):
                 self.__install_chromedriver()
+
+        if not os.path.exists(self.profile_dir):
+            os.mkdir(self.profile_dir)
+            logger.debug("created chrome user dir")
 
     def __install_chromedriver(self):
 
@@ -171,8 +181,12 @@ class TvDatafeed:
         shutil.rmtree(self.path)
         logger.info("cache cleared")
 
-    def __init__(self, username=None, password=None, chromedriver_path=None) -> None:
+    def __init__(
+        self, username=None, password=None, chromedriver_path=None, auto_login=False
+    ) -> None:
+        self.__automatic_login = auto_login
         self.chromedriver_path = chromedriver_path
+        self.profile_dir = os.path.join(self.path, "chrome")
         self.__assert_dir()
 
         # read if token exists
@@ -416,6 +430,66 @@ class TvDatafeed:
                 break
 
         return self.__create_df(raw_data, symbol)
+
+    def get_driver_session(self, headless=False):
+        caps = DesiredCapabilities.CHROME
+
+        caps["goog:loggingPrefs"] = {"performance": "ALL"}
+
+        logger.info("refreshing tradingview token using selenium")
+        logger.debug("launching chrome")
+        options = Options()
+
+        if headless:
+            options.add_argument("--headless")
+
+        options.add_argument("--start-maximized")
+        options.add_argument("--disable-gpu")
+        options.add_argument(f"user-data-dir={self.profile_dir}")
+
+        try:
+            if self.__automatic_login:
+                print(
+                    "\n\n\nYou need to login manually in the\n\n press enter to open the browser "
+                )
+                input()
+                print(
+                    "opening browser. Press enter once lgged in. Do NOT CLOSE THE BROWSER"
+                )
+                time.sleep(5)
+            kill_chromedriver()
+            driver = webdriver.Chrome(
+                self.chromedriver_path, desired_capabilities=caps, options=options
+            )
+
+            logger.debug("opening https://in.tradingview.com ")
+
+            return driver
+
+        except Exception as e:
+            logger.error(e)
+
+    def login(self):
+        driver = self.get_driver_session(headless=True)
+        if driver is None:
+            logger.error(" unable to initialize chromedriver")
+
+        else:
+            if self.__automatic_login:
+                # autologin code
+                pass
+            else:
+                # manual login
+                pass
+
+            # get token
+
+
+# TODO:
+# remove this
+# start chromedriver in folder
+# add manual login
+# open chart and use the token
 
 
 if __name__ == "__main__":
