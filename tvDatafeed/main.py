@@ -18,12 +18,6 @@ from websocket import create_connection
 logger = logging.getLogger(__name__)
 
 
-def kill_chromedriver():
-    stream = os.popen("taskkill /F /IM chromedriver.exe /T")
-    output = stream.read()
-    logger.warning(output)
-
-
 class Interval(enum.Enum):
     in_1_minute = "1"
     in_3_minute = "3"
@@ -44,16 +38,54 @@ class TvDatafeed:
     path = os.path.join(os.path.expanduser("~"), ".tv_datafeed/")
     headers = json.dumps({"Origin": "https://data.tradingview.com"})
 
+    def __save_token(self, token):
+        tokenfile = os.path.join(self.path, "token")
+        contents = dict(
+            token=token,
+            date=self.token_date,
+            chromedriver_path=self.chromedriver_path,
+        )
+
+        with open(tokenfile, "wb") as f:
+            pickle.dump(contents, f)
+
+        logger.debug("auth saved")
+
+    def __load_token(self):
+        tokenfile = os.path.join(self.path, "token")
+        token = None
+        if os.path.exists(tokenfile):
+            with open(tokenfile, "rb") as f:
+                contents = pickle.load(f)
+
+            if contents["date"] == datetime.date.today() and contents["token"] not in [
+                "unauthorized_user_token",
+                None,
+            ]:
+                token = contents["token"]
+                self.token_date = contents["date"]
+                logger.debug("auth loaded")
+
+            self.chromedriver_path = contents["chromedriver_path"]
+
+        return token
+
     def __assert_dir(self):
         if not os.path.exists(self.path):
             os.mkdir(self.path)
-            if (
-                input(
-                    "\n\ndo you want to install chromedriver automatically?? y/n\t"
-                ).lower()
-                == "y"
-            ):
-                self.__install_chromedriver()
+            if self.chromedriver_path is None:
+                if (
+                    input(
+                        "\n\ndo you want to install chromedriver automatically?? y/n\t"
+                    ).lower()
+                    == "y"
+                ):
+                    self.__install_chromedriver()
+
+            else:
+                logger.info(
+                    "will use specified chromedriver path, no to specify this path again"
+                )
 
         if not os.path.exists(self.profile_dir):
             os.mkdir(self.profile_dir)
@@ -72,6 +104,7 @@ class TvDatafeed:
                 self.path, "chromedriver" + ".exe" if ".exe" in path else ""
             )
             shutil.copy(path, self.chromedriver_path)
+            self.__save_token(token=None)
 
             try:
                 time.sleep(1)
@@ -83,96 +116,6 @@ class TvDatafeed:
 
         else:
             logger.error(" unable to download chromedriver automatically.")
-
-    @staticmethod
-    def __get_token(username, password, chromedriver_path):
-        caps = DesiredCapabilities.CHROME
-
-        caps["goog:loggingPrefs"] = {"performance": "ALL"}
-
-        headless = True
-        logger.info("refreshing tradingview token using selenium")
-        logger.debug("launching chrome")
-        options = Options()
-        if headless:
-            options.add_argument("--headless")
-
-        options.add_argument("--start-maximized")
-
-        options.add_argument("--disable-gpu")
-        try:
-            driver = webdriver.Chrome(
-                chromedriver_path, desired_capabilities=caps, options=options
-            )
-
-            logger.debug("opening https://in.tradingview.com ")
-            driver.set_window_size(1920, 1080)
-            driver.get("https://in.tradingview.com")
-
-            time.sleep(5)
-            logger.debug("click sign in")
-            driver.find_element_by_class_name("tv-header__user-menu-button").click()
-            driver.find_element_by_xpath(
-                '//*[@id="overlap-manager-root"]/div/span/div[1]/div/div/div[1]/div[2]/div'
-            ).click()
-
-            time.sleep(5)
-            logger.debug("click email")
-            embutton = driver.find_element_by_class_name(
-                "tv-signin-dialog__toggle-email"
-            )
-            embutton.click()
-            time.sleep(5)
-            logger.debug("enter credentials and log in")
-            username_input = driver.find_element_by_name("username")
-            username_input.send_keys(username)
-            password_input = driver.find_element_by_name("password")
-            password_input.send_keys(password)
-            submit_button = driver.find_element_by_class_name("tv-button__loader")
-            submit_button.click()
-            time.sleep(5)
-            logger.debug("opening chart")
-            driver.get("https://www.tradingview.com/chart/")
-            pass
-
-            def process_browser_logs_for_network_events(logs):
-                for entry in logs:
-                    log = json.loads(entry["message"])["message"]
-                    # if (
-                    #     "Network.response" in log["method"]
-                    #     or "Network.request" in log["method"]
-                    #     or "Network.webSocket" in log["method"]
-                    # )
-
-                    if "Network.webSocketFrameSent" in log["method"]:
-                        if (
-                            "set_auth_token" in log["params"]["response"]["payloadData"]
-                            and "unauthorized_user_token"
-                            not in log["params"]["response"]["payloadData"]
-                        ):
-                            yield log
-
-            logs = driver.get_log("performance")
-            events = process_browser_logs_for_network_events(logs)
-
-            for event in events:
-                x = event
-                token = json.loads(
-                    x["params"]["response"]["payloadData"].split("~")[-1]
-                )["p"][0]
-
-            filename = os.path.join(os.path.split(__file__)[0], "tv_token.pkl")
-            with open(filename, "wb") as f:
-                pickle.dump({"date": datetime.date.today(), "token": token}, f)
-            logger.debug("token saved successfully")
-
-            driver.quit()
-
-        except Exception as e:
-            logger.warn(f"error {e}")
-            driver.quit()
-            token = None
-        return token
 
     def clear_cache(self):
 
@@ -187,60 +130,164 @@ class TvDatafeed:
         self.__automatic_login = auto_login
         self.chromedriver_path = chromedriver_path
         self.profile_dir = os.path.join(self.path, "chrome")
+        self.token_date = datetime.date.today() - datetime.timedelta(days=1)
         self.__assert_dir()
 
-        # read if token exists
-        tokenfile = os.path.join(self.path, "token")
         token = None
-
-        if username is not None and password is not None:
-            if os.path.exists(tokenfile):
-                with open(tokenfile, "rb") as f:
-                    contents = pickle.load(f)
-
-                if (
-                    contents["username"] == username
-                    and contents["password"] == password
-                    and contents["date"] == datetime.date.today()
-                ):
-                    token = contents["token"]
-                self.chromedriver_path = contents["chromedriver_path"]
-
-            if token is None:
-                if self.chromedriver_path is None or not os.path.exists(
-                    self.chromedriver_path
-                ):
-                    if (
-                        input(
-                            "\nchromedriver not found. do you want to autoinstall chromedriver?? y/n"
-                        ).lower()
-                        == "y"
-                    ):
-                        self.__install_chromedriver()
-
-                token = self.__get_token(username, password, self.chromedriver_path)
-                if token is not None:
-                    contents = dict(
-                        username=username,
-                        password=password,
-                        token=token,
-                        date=datetime.date.today(),
-                        chromedriver_path=self.chromedriver_path,
-                    )
-
-                    with open(tokenfile, "wb") as f:
-                        pickle.dump(contents, f)
+        token = self.auth(username, password)
 
         if token is None:
             token = "unauthorized_user_token"
-            logger.warn("you are using nologin method, data you access may be limited")
+            logger.warning(
+                "you are using nologin method, data you access may be limited"
+            )
 
         self.token = token
         self.ws = None
         self.session = self.__generate_session()
         self.chart_session = self.__generate_chart_session()
 
-        self.ab_status = False
+    def __login(self, username, password):
+
+        driver = self.__webdriver_init()
+
+        if not self.__automatic_login:
+            input()
+
+        else:
+            try:
+                logger.debug("click sign in")
+                driver.find_element_by_class_name("tv-header__user-menu-button").click()
+                driver.find_element_by_xpath(
+                    '//*[@id="overlap-manager-root"]/div/span/div[1]/div/div/div[1]/div[2]/div'
+                ).click()
+
+                time.sleep(5)
+                logger.debug("click email")
+                embutton = driver.find_element_by_class_name(
+                    "tv-signin-dialog__toggle-email"
+                )
+                embutton.click()
+                time.sleep(5)
+
+                logger.debug("entering credentials")
+                username_input = driver.find_element_by_name("username")
+                username_input.send_keys(username)
+                password_input = driver.find_element_by_name("password")
+                password_input.send_keys(password)
+
+                logger.debug("click login")
+                submit_button = driver.find_element_by_class_name("tv-button__loader")
+                submit_button.click()
+                time.sleep(5)
+            except Exception as e:
+                logger.error(f"{e}, {e.args}")
+                logger.error(
+                    "automatic login failed\n Reinitialize tvdatafeed with auto_login=False "
+                )
+
+        return driver
+
+    def auth(self, username, password):
+        token = self.__load_token()
+
+        if (
+            token is None
+            and (username is None or password is None)
+            and self.__automatic_login
+        ):
+            pass
+
+        elif self.token_date == datetime.date.today():
+            pass
+
+        elif token is not None and (username is None or password is None):
+            driver = self.__webdriver_init()
+            if driver is not None:
+                token = self.__get_token(driver)
+                self.token_date = datetime.date.today()
+                self.__save_token(token)
+
+        else:
+            driver = self.__login(username, password)
+            if driver is not None:
+                token = self.__get_token(driver)
+                self.token_date = datetime.date.today()
+                self.__save_token(token)
+
+        return token
+
+    def __webdriver_init(self):
+        caps = DesiredCapabilities.CHROME
+
+        caps["goog:loggingPrefs"] = {"performance": "ALL"}
+
+        logger.info("refreshing tradingview token using selenium")
+        logger.debug("launching chrome")
+        options = Options()
+
+        if self.__automatic_login:
+            options.add_argument("--headless")
+            logger.debug("chromedriver in headless mode")
+
+        # options.add_argument("--start-maximized")
+        options.add_argument("--disable-gpu")
+        options.add_argument(f"user-data-dir={self.profile_dir}")
+
+        try:
+            if not self.__automatic_login:
+                print(
+                    "\n\n\nYou need to login manually\n\n Press 'enter' to open the browser "
+                )
+                input()
+                print(
+                    "opening browser. Press enter once lgged in return back and press 'enter'. \n\nDO NOT CLOSE THE BROWSER"
+                )
+                time.sleep(5)
+
+            driver = webdriver.Chrome(
+                self.chromedriver_path, desired_capabilities=caps, options=options
+            )
+
+            logger.debug("opening https://in.tradingview.com ")
+            driver.set_window_size(1920, 1080)
+            driver.get("https://in.tradingview.com")
+            time.sleep(5)
+
+            return driver
+
+        except Exception as e:
+            driver.quit()
+            logger.error(e)
+
+    @staticmethod
+    def __get_token(driver: webdriver.Chrome):
+        driver.get("https://www.tradingview.com/chart/")
+
+        def process_browser_logs_for_network_events(logs):
+            for entry in logs:
+                log = json.loads(entry["message"])["message"]
+
+                if "Network.webSocketFrameSent" in log["method"]:
+                    if (
+                        "set_auth_token" in log["params"]["response"]["payloadData"]
+                        and "unauthorized_user_token"
+                        not in log["params"]["response"]["payloadData"]
+                    ):
+                        yield log
+
+        logs = driver.get_log("performance")
+        events = process_browser_logs_for_network_events(logs)
+        token = None
+        for event in events:
+            x = event
+            token = json.loads(x["params"]["response"]["payloadData"].split("~")[-1])[
+                "p"
+            ][0]
+
+        driver.quit()
+
+        return token
 
     def __create_connection(self):
         logging.debug("creating websocket connection")
@@ -351,16 +398,13 @@ class TvDatafeed:
         Returns:
             pd.Dataframe: dataframe with sohlcv as columns
         """
-        # self = self()
         symbol = self.__format_symbol(
             symbol=symbol, exchange=exchange, contract=fut_contract
         )
 
         interval = interval.value
 
-        # logger.debug("chart_session generated {}".format(self.chart_session))
         self.__create_connection()
-        # self.__send_message("set_auth_token", ["unauthorized_user_token"])
 
         self.__send_message("set_auth_token", [self.token])
         self.__send_message("chart_create_session", [self.chart_session, ""])
@@ -431,73 +475,17 @@ class TvDatafeed:
 
         return self.__create_df(raw_data, symbol)
 
-    def get_driver_session(self, headless=False):
-        caps = DesiredCapabilities.CHROME
-
-        caps["goog:loggingPrefs"] = {"performance": "ALL"}
-
-        logger.info("refreshing tradingview token using selenium")
-        logger.debug("launching chrome")
-        options = Options()
-
-        if headless:
-            options.add_argument("--headless")
-
-        options.add_argument("--start-maximized")
-        options.add_argument("--disable-gpu")
-        options.add_argument(f"user-data-dir={self.profile_dir}")
-
-        try:
-            if self.__automatic_login:
-                print(
-                    "\n\n\nYou need to login manually in the\n\n press enter to open the browser "
-                )
-                input()
-                print(
-                    "opening browser. Press enter once lgged in. Do NOT CLOSE THE BROWSER"
-                )
-                time.sleep(5)
-            kill_chromedriver()
-            driver = webdriver.Chrome(
-                self.chromedriver_path, desired_capabilities=caps, options=options
-            )
-
-            logger.debug("opening https://in.tradingview.com ")
-
-            return driver
-
-        except Exception as e:
-            logger.error(e)
-
-    def login(self):
-        driver = self.get_driver_session(headless=True)
-        if driver is None:
-            logger.error(" unable to initialize chromedriver")
-
-        else:
-            if self.__automatic_login:
-                # autologin code
-                pass
-            else:
-                # manual login
-                pass
-
-            # get token
-
-
-# TODO:
-# remove this
-# start chromedriver in folder
-# add manual login
-# open chart and use the token
-
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.DEBUG)
     import credentials
 
     username, password, _, _, _ = credentials.get_credentials("tradingview")
-    tv = TvDatafeed(username, password)
+
+    tv = TvDatafeed(
+        # username,
+        # password,
+        auto_login=False,
+    )
     print(tv.get_hist("CRUDEOIL", "MCX", fut_contract=1))
     print(tv.get_hist("NIFTY", "NSE", fut_contract=1))
     print(tv.get_hist("TCS", "NSE"))

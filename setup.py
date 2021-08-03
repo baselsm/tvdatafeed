@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setup(
     name="tvdatafeed",
-    version="1.0.5",
+    version="1.1.0",
     packages=["tvDatafeed"],
     url="https://www.youtube.com/watch?v=qDrXmb2ZRjo",
     license="MIT License",

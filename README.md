@@ -21,7 +21,6 @@ For usage instructions watch this video-
 Import the packages and initialize with your tradingview username and password. If running for first time it will prompt chromedriver download, type 'y' and press enter.
 
 ```
-
 from tvDatafeed import TvDatafeed,Interval
 
 username = 'YourTradingViewUsername'
@@ -29,10 +28,16 @@ password = 'YourTradingViewPassword'
 
 
 
-tv=TvDatafeed(username, password, chromedriver_path=None)
+tv = TvDatafeed(username, password, chromedriver_path=None)
+```
 
+If auto login fails, you can try logging in manually by specifying `auto_login=False`
 
 ```
+tv = TvDatafeed(auto_login=False)
+```
+
+It will open TradingView website, you need to login manually. Once logged in return back to terminal and press 'enter', browser will automatically close. Whichever login method is used, login is required only once.
 
 You may use without logging in, but in that case tradingview may limit the symbols and some symbols might not be available. To use it without logging in
 
@@ -40,12 +45,15 @@ You may use without logging in, but in that case tradingview may limit the symbo
 tv = TvDatafeed()
 ```
 
+---
+
+## Getting Data
+
 To download the data use `tv.get_hist` method.
 
 It accepts following arguments and returns pandas dataframe
 
 ```
-
 (symbol: str, exchange: str = 'NSE', interval: Interval = Interval.in_daily, n_bars: int = 10, fut_contract: int | None = None) -> DataFrame)
 ```
 
@@ -53,19 +61,16 @@ for example-
 
 ```
 # index
-nifty_index_data=tv.get_hist(symbol='NIFTY',exchange='NSE',interval=Interval.in_1_hour,n_bars=1000)
+nifty_index_data = tv.get_hist(symbol='NIFTY',exchange='NSE',interval=Interval.in_1_hour,n_bars=1000)
 
 # futures continuous contract
-nifty_futures_data=tv.get_hist(symbol='NIFTY',exchange='NSE',interval=Interval.in_1_hour,n_bars=1000,fut_contract=1)
+nifty_futures_data = tv.get_hist(symbol='NIFTY',exchange='NSE',interval=Interval.in_1_hour,n_bars=1000,fut_contract=1)
 
 # crudeoil
-crudeoil_data=tv.get_hist(symbol='CRUDEOIL',exchange='MCX',interval=Interval.in_1_hour,n_bars=5000,fut_contract=1)
+crudeoil_data = tv.get_hist(symbol='CRUDEOIL',exchange='MCX',interval=Interval.in_1_hour,n_bars=5000,fut_contract=1)
 ```
 
-
 ---
-
-
 
 Following timeframes intervals are supported-
 
@@ -94,3 +99,11 @@ Following timeframes intervals are supported-
 `Interval.in_weekly `
 
 `Interval.in_monthly`
+
+---
+
+If you face any difficulty you can reset this tvdatafeed using `clear_cache` method. You will need to login again after reset.
+
+```
+tv.clear_cache()
+```
