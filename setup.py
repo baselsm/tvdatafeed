@@ -14,4 +14,5 @@ setup(
     description="TradingView historical data downloader",
     long_description_content_type="text/markdown",
     long_description=long_description,
+    install_requires=['setuptools','pandas','selenium','websocket-client','chromedriver-autoinstaller']
 )
