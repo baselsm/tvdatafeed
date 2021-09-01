@@ -10,7 +10,15 @@ This module is installed via pip:
 pip install --upgrade --no-cache-dir git+https://github.com/StreamAlpha/tvdatafeed.git
 ```
 
-For usage instructions watch this video-
+For usage instructions watch these videos-
+
+v1.1 tutorial with installation and backtrader usage
+
+[![Watch the video](https://img.youtube.com/vi/f76dOZW2gwI/hqdefault.jpg)](https://youtu.be/f76dOZW2gwI)
+
+
+
+Full tutorial
 
 [![Watch the video](https://img.youtube.com/vi/qDrXmb2ZRjo/hqdefault.jpg)](https://youtu.be/qDrXmb2ZRjo)
 
