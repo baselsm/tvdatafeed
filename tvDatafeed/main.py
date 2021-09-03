@@ -14,6 +14,7 @@ from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 from websocket import create_connection
+import sys
 
 logger = logging.getLogger(__name__)
 
@@ -83,6 +84,7 @@ class TvDatafeed:
                     self.__install_chromedriver()
 
             else:
+                self.__save_token(token=None)
                 logger.info(
                     "will use specified chromedriver path, no to specify this path again"
                 )
@@ -101,7 +103,7 @@ class TvDatafeed:
 
         if path is not None:
             self.chromedriver_path = os.path.join(
-                self.path, "chromedriver" + ".exe" if ".exe" in path else ""
+                self.path, "chromedriver" + (".exe" if ".exe" in path else "")
             )
             shutil.copy(path, self.chromedriver_path)
             self.__save_token(token=None)
@@ -232,7 +234,14 @@ class TvDatafeed:
 
         # options.add_argument("--start-maximized")
         options.add_argument("--disable-gpu")
-        options.add_argument(f"user-data-dir={self.profile_dir}")
+
+        # special workaround for linux
+        if sys.platform == "linux":
+            options.add_argument(
+                f'--user-data-dir={os.path.expanduser("~")}/snap/chromium/common/chromium/Default'
+            )
+        else:
+            options.add_argument(f"user-data-dir={self.profile_dir}")
 
         try:
             if not self.__automatic_login:
@@ -477,13 +486,7 @@ class TvDatafeed:
 
 
 if __name__ == "__main__":
-    import credentials
-
-    username, password, _, _, _ = credentials.get_credentials("tradingview")
-
     tv = TvDatafeed(
-        # username,
-        # password,
         auto_login=False,
     )
     print(tv.get_hist("CRUDEOIL", "MCX", fut_contract=1))
