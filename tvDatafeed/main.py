@@ -240,6 +240,11 @@ class TvDatafeed:
             options.add_argument(
                 f'--user-data-dir={os.path.expanduser("~")}/snap/chromium/common/chromium/Default'
             )
+        # special workaround for macos. Credits "Ambooj"
+        elif sys.platform == "darwin":
+            options.add_argument(
+                f'--user-data-dir={os.path.expanduser("~")}/Library/Application Support/Google/Chrome'
+            )
         else:
             options.add_argument(f"user-data-dir={self.profile_dir}")
 
