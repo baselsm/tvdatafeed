@@ -2,9 +2,8 @@
 
 A simple TradingView historical Data Downloader
 
-If you found the content useful and want to support my work, you can buy me a coffee! 
+If you found the content useful and want to support my work, you can buy me a coffee!
 [!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/StreamAlpha)
-
 
 ## Installation
 
@@ -20,8 +19,6 @@ v1.1 tutorial with installation and backtrader usage
 
 [![Watch the video](https://img.youtube.com/vi/f76dOZW2gwI/hqdefault.jpg)](https://youtu.be/f76dOZW2gwI)
 
-
-
 Full tutorial
 
 [![Watch the video](https://img.youtube.com/vi/qDrXmb2ZRjo/hqdefault.jpg)](https://youtu.be/qDrXmb2ZRjo)
@@ -33,7 +30,7 @@ Full tutorial
 Import the packages and initialize with your tradingview username and password. If running for first time it will prompt chromedriver download, type 'y' and press enter.
 
 ```
-from tvDatafeed import TvDatafeed,Interval
+from tvDatafeed import TvDatafeed, Interval, symbols
 
 username = 'YourTradingViewUsername'
 password = 'YourTradingViewPassword'
@@ -114,15 +111,42 @@ Following timeframes intervals are supported-
 
 ---
 
+## Tradingview Symbols
+
+### Search Symbol
+
+To search the symbols
+
+```
+symbols.search(symbol='IRCTC')
+
+symbols.search(symbol='IRCTC',exchange='BSE')
+
+>>> [{'symbol': 'IRCTC', 'exchange': 'BSE', 'category': 'STOCKS', 'currency': 'INR', 'description': 'INDIAN RAILWAY CATERING AND TO', 'url': 'http://www.tradingview.com/symbols/BSE-IRCTC'}]
+
+```
+
+### Validate Symbol
+
+You can validate if a symbol exists on tradingview, returns `True` if symbol exists else `False`
+
+```
+symbols.validate(symbol='IRCTC',exchange='BSE')
+>>> True
+```
+
+---
+
 If you face any difficulty you can reset this tvdatafeed using `clear_cache` method. You will need to login again after reset.
 
 ```
 tv.clear_cache()
 ```
 
--------------
+---
 
 ## Read this before creating an issue
+
 Before creating an issue in this library, please follow the following steps.
 
 1. Search the problem you are facing is already asked by someone else. There might be some issues already there, either solved/unsolved related to your problem. Go to [issues](https://github.com/StreamAlpha/tvdatafeed/issues) page, use `is:issue` as filter and search your problem. ![image](https://user-images.githubusercontent.com/59556194/128167319-2654cfa1-f718-4a52-82f8-b0c0d26bf4ef.png)

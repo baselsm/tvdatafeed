@@ -59,7 +59,7 @@ class TvDatafeed:
             with open(tokenfile, "rb") as f:
                 contents = pickle.load(f)
 
-            if contents["date"] == datetime.date.today() and contents["token"] not in [
+            if contents["token"] not in [
                 "unauthorized_user_token",
                 None,
             ]:
