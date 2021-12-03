@@ -145,6 +145,11 @@ tv.clear_cache()
 
 ---
 
+## Troubleshooting
+
+Check this [issue](https://github.com/StreamAlpha/tvdatafeed/issues/26#issuecomment-912619033). A hard reset procedure mainly for linux but works on all platforms.
+
+---
 ## Read this before creating an issue
 
 Before creating an issue in this library, please follow the following steps.
