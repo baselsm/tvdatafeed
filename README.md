@@ -111,7 +111,7 @@ Following timeframes intervals are supported-
 
 ---
 
-## Tradingview Symbols
+<!-- ## Tradingview Symbols
 
 ### Search Symbol
 
@@ -134,7 +134,7 @@ You can validate if a symbol exists on tradingview, returns `True` if symbol exi
 symbols.validate(symbol='IRCTC',exchange='BSE')
 >>> True
 ```
-
+ -->
 ---
 
 If you face any difficulty you can reset this tvdatafeed using `clear_cache` method. You will need to login again after reset.
