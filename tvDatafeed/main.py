@@ -161,7 +161,7 @@ class TvDatafeed:
                 logger.debug("click sign in")
                 driver.find_element_by_class_name("tv-header__user-menu-button").click()
                 driver.find_element_by_xpath(
-                    '//*[@id="overlap-manager-root"]/div/span/div[1]/div/div/div[1]/div[2]/div'
+                    '//*[@data-name="header-user-menu-sign-in"]'
                 ).click()
 
                 time.sleep(5)
