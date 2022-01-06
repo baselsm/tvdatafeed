@@ -127,8 +127,14 @@ class TvDatafeed:
         logger.info("cache cleared")
 
     def __init__(
-        self, username=None, password=None, chromedriver_path=None, auto_login=True
+        self,
+        username=None,
+        password=None,
+        chromedriver_path=None,
+        auto_login=True,
     ) -> None:
+
+        self.ws_debug = False
         self.__automatic_login = auto_login
         self.chromedriver_path = chromedriver_path
         self.profile_dir = os.path.join(self.path, "chrome")
@@ -161,7 +167,7 @@ class TvDatafeed:
                 logger.debug("click sign in")
                 driver.find_element_by_class_name("tv-header__user-menu-button").click()
                 driver.find_element_by_xpath(
-                    '//*[@data-name="header-user-menu-sign-in"]'
+                    '//*[@id="overlap-manager-root"]/div/span/div[1]/div/div/div[1]/div[2]/div'
                 ).click()
 
                 time.sleep(5)
@@ -344,37 +350,40 @@ class TvDatafeed:
     def __create_message(self, func, paramList):
         return self.__prepend_header(self.__construct_message(func, paramList))
 
-    def __send_raw_message(self, message):
-        self.ws.send(self.__prepend_header(message))
-
     def __send_message(self, func, args):
-        self.ws.send(self.__create_message(func, args))
+        m = self.__create_message(func, args)
+        if self.ws_debug:
+            print(m)
+        self.ws.send(m)
 
     @staticmethod
     def __create_df(raw_data, symbol):
-        out = re.search('"s":\[(.+?)\}\]', raw_data).group(1)
-        x = out.split(',{"')
-        data = list()
+        try:
+            out = re.search('"s":\[(.+?)\}\]', raw_data).group(1)
+            x = out.split(',{"')
+            data = list()
 
-        for xi in x:
-            xi = re.split("\[|:|,|\]", xi)
-            ts = datetime.datetime.fromtimestamp(float(xi[4]))
-            data.append(
-                [
-                    ts,
-                    float(xi[5]),
-                    float(xi[6]),
-                    float(xi[7]),
-                    float(xi[8]),
-                    float(xi[9]),
-                ]
-            )
+            for xi in x:
+                xi = re.split("\[|:|,|\]", xi)
+                ts = datetime.datetime.fromtimestamp(float(xi[4]))
+                data.append(
+                    [
+                        ts,
+                        float(xi[5]),
+                        float(xi[6]),
+                        float(xi[7]),
+                        float(xi[8]),
+                        float(xi[9]),
+                    ]
+                )
 
-        data = pd.DataFrame(
-            data, columns=["datetime", "open", "high", "low", "close", "volume"]
-        ).set_index("datetime")
-        data.insert(0, "symbol", value=symbol)
-        return data
+            data = pd.DataFrame(
+                data, columns=["datetime", "open", "high", "low", "close", "volume"]
+            ).set_index("datetime")
+            data.insert(0, "symbol", value=symbol)
+            return data
+        except AttributeError:
+            logger.error("no data, please check the exchange and symbol")
 
     @staticmethod
     def __format_symbol(symbol, exchange, contract: int = None):
@@ -399,6 +408,7 @@ class TvDatafeed:
         interval: Interval = Interval.in_daily,
         n_bars: int = 10,
         fut_contract: int = None,
+        extended_session: bool = False,
     ) -> pd.DataFrame:
         """get historical data
 
@@ -408,6 +418,7 @@ class TvDatafeed:
             interval (str, optional): chart interval. Defaults to 'D'.
             n_bars (int, optional): no of bars to download, max 5000. Defaults to 10.
             fut_contract (int, optional): None for cash, 1 for continuous current contract in front, 2 for continuous next contract in front . Defaults to None.
+            extended_session (bool, optional): regular session if False, extended session if True, Defaults to False.
 
         Returns:
             pd.Dataframe: dataframe with sohlcv as columns
@@ -465,13 +476,16 @@ class TvDatafeed:
                 "symbol_1",
                 '={"symbol":"'
                 + symbol
-                + '","adjustment":"splits","session":"extended"}',
+                + '","adjustment":"splits","session":'
+                + ('"regular"' if not extended_session else '"extended"')
+                + "}",
             ],
         )
         self.__send_message(
             "create_series",
             [self.chart_session, "s1", "s1", "symbol_1", interval, n_bars],
         )
+        self.__send_message("switch_timezone", [self.chart_session, "exchange"])
 
         raw_data = ""
 
@@ -491,9 +505,18 @@ class TvDatafeed:
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.DEBUG)
     tv = TvDatafeed(
-        auto_login=False,
+        # auto_login=False,
     )
     print(tv.get_hist("CRUDEOIL", "MCX", fut_contract=1))
     print(tv.get_hist("NIFTY", "NSE", fut_contract=1))
-    print(tv.get_hist("TCS", "NSE"))
+    print(
+        tv.get_hist(
+            "EICHERMOT",
+            "NSE",
+            interval=Interval.in_1_hour,
+            n_bars=500,
+            extended_session=False,
+        )
+    )
