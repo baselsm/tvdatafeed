@@ -131,6 +131,24 @@ Following timeframes intervals are supported-
 `Interval.in_monthly`
 
 ---
+## Cloud Usage
+You might face some problem while using TvDatafeed in cloud because of selenium. For that make sure to create the app dir before initializing TvDatafeed
+
+```python
+import os
+from tvDatafeed import TvDatafeed,Interval
+app_dir = os.mkdir(os.path.join(os.path.expanduser("~"), ".tv_datafeed/"))
+if not os.path.exists(app_dir):
+    os.mkdir(app_dir)
+
+tv = TvDatafeed()
+
+# your code goes here
+```
+
+This will only work without username and password. You will be able to download most of the data without logging in
+
+---
 
 ## Troubleshooting
 
