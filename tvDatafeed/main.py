@@ -253,7 +253,7 @@ class TvDatafeed:
             )
         else:
             options.add_argument(f"user-data-dir={self.profile_dir}")
-
+        driver = None
         try:
             if not self.__automatic_login:
                 print(
@@ -277,7 +277,8 @@ class TvDatafeed:
             return driver
 
         except Exception as e:
-            driver.quit()
+            if driver is not None:
+                driver.quit()
             logger.error(e)
 
     @staticmethod
