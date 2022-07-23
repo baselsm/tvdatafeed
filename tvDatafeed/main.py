@@ -11,7 +11,9 @@ import string
 import time
 import pandas as pd
 from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.common.by import By
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 from websocket import create_connection
 import sys
@@ -165,27 +167,29 @@ class TvDatafeed:
         else:
             try:
                 logger.debug("click sign in")
-                driver.find_element_by_class_name("tv-header__user-menu-button").click()
-                driver.find_element_by_xpath(
-                    '//*[@id="overlap-manager-root"]/div/span/div[1]/div/div/div[1]/div[2]/div'
-                ).click()
 
-                time.sleep(5)
+                driver.find_element(By.CLASS_NAME, "tv-header__user-menu-button").click()
+                time.sleep(1)
+
+
+                driver.find_element(By.CSS_SELECTOR , 'button[data-name="header-user-menu-sign-in"]').click()
+                
+                time.sleep(3)
                 logger.debug("click email")
-                embutton = driver.find_element_by_class_name(
+                embutton = driver.find_element(By.CLASS_NAME,
                     "tv-signin-dialog__toggle-email"
                 )
                 embutton.click()
                 time.sleep(5)
 
                 logger.debug("entering credentials")
-                username_input = driver.find_element_by_name("username")
+                username_input = driver.find_element(By.NAME, "username")
                 username_input.send_keys(username)
-                password_input = driver.find_element_by_name("password")
+                password_input = driver.find_element(By.NAME, "password")
                 password_input.send_keys(password)
 
                 logger.debug("click login")
-                submit_button = driver.find_element_by_class_name("tv-button__loader")
+                submit_button = driver.find_element(By.CLASS_NAME, "tv-button__loader")
                 submit_button.click()
                 time.sleep(5)
             except Exception as e:
@@ -264,9 +268,10 @@ class TvDatafeed:
                     "opening browser. Press enter once lgged in return back and press 'enter'. \n\nDO NOT CLOSE THE BROWSER"
                 )
                 time.sleep(5)
+            service = Service(verbose = False, executable_path=self.chromedriver_path)
 
             driver = webdriver.Chrome(
-                self.chromedriver_path, desired_capabilities=caps, options=options
+                service = service, desired_capabilities=caps, options=options
             )
 
             logger.debug("opening https://in.tradingview.com ")
