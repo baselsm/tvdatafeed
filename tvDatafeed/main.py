@@ -170,11 +170,11 @@ class TvDatafeed:
 
                 driver.find_element(By.CLASS_NAME, "tv-header__user-menu-button").click()
                 time.sleep(1)
-                driver.find_element("xpath",
-                    '//*[@id="overlap-manager-root"]/div/span/div[1]/div/div/div[1]/div[2]/div'
-                ).click()
 
-                time.sleep(5)
+
+                driver.find_element(By.CSS_SELECTOR , 'button[data-name="header-user-menu-sign-in"]').click()
+                
+                time.sleep(3)
                 logger.debug("click email")
                 embutton = driver.find_element(By.CLASS_NAME,
                     "tv-signin-dialog__toggle-email"
