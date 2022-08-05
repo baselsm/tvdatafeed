@@ -7,7 +7,7 @@ setup(
     name="tvdatafeed",
     version="1.2.1",
     packages=["tvDatafeed"],
-    url="https://github.com/StreamAlpha/tvdatafeed/",
+    url="https://github.com/baselsm/tvdatafeed/",
     project_urls={
         "YouTube": "https://youtube.com/StreamAlpha?sub_confirmation=1",
         "Funding": "https://www.buymeacoffee.com/StreamAlpha",
