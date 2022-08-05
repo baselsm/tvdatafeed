@@ -16,7 +16,7 @@ pip install tvdatafeed
 or installing from github repo
 
 ```sh
-pip install --upgrade --no-cache-dir git+https://github.com/StreamAlpha/tvdatafeed.git
+pip install --upgrade --no-cache-dir git+https://github.com/baselsm/tvdatafeed.git
 ```
 
 For usage instructions, watch these videos-
