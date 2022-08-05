@@ -11,9 +11,7 @@ import string
 import time
 import pandas as pd
 from selenium import webdriver
-from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.common.by import By
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 from websocket import create_connection
 import sys
@@ -32,9 +30,6 @@ class Interval(enum.Enum):
     in_2_hour = "2H"
     in_3_hour = "3H"
     in_4_hour = "4H"
-    in_6_hour = "6H"
-    in_8_hour = "8H"
-    in_12_hour = "12H"
     in_daily = "1D"
     in_weekly = "1W"
     in_monthly = "1M"
@@ -170,29 +165,27 @@ class TvDatafeed:
         else:
             try:
                 logger.debug("click sign in")
+                driver.find_element_by_class_name("tv-header__user-menu-button").click()
+                driver.find_element_by_xpath(
+                    '//*[@id="overlap-manager-root"]/div/span/div[1]/div/div/div[1]/div[2]/div'
+                ).click()
 
-                driver.find_element(By.CLASS_NAME, "tv-header__user-menu-button").click()
-                time.sleep(1)
-
-
-                driver.find_element(By.CSS_SELECTOR , 'button[data-name="header-user-menu-sign-in"]').click()
-                
-                time.sleep(3)
+                time.sleep(5)
                 logger.debug("click email")
-                embutton = driver.find_element(By.CLASS_NAME,
+                embutton = driver.find_element_by_class_name(
                     "tv-signin-dialog__toggle-email"
                 )
                 embutton.click()
                 time.sleep(5)
 
                 logger.debug("entering credentials")
-                username_input = driver.find_element(By.NAME, "username")
+                username_input = driver.find_element_by_name("username")
                 username_input.send_keys(username)
-                password_input = driver.find_element(By.NAME, "password")
+                password_input = driver.find_element_by_name("password")
                 password_input.send_keys(password)
 
                 logger.debug("click login")
-                submit_button = driver.find_element(By.CLASS_NAME, "tv-button__loader")
+                submit_button = driver.find_element_by_class_name("tv-button__loader")
                 submit_button.click()
                 time.sleep(5)
             except Exception as e:
@@ -260,7 +253,7 @@ class TvDatafeed:
             )
         else:
             options.add_argument(f"user-data-dir={self.profile_dir}")
-        driver = None
+
         try:
             if not self.__automatic_login:
                 print(
@@ -271,10 +264,9 @@ class TvDatafeed:
                     "opening browser. Press enter once lgged in return back and press 'enter'. \n\nDO NOT CLOSE THE BROWSER"
                 )
                 time.sleep(5)
-            service = Service(verbose = False, executable_path=self.chromedriver_path)
 
             driver = webdriver.Chrome(
-                service = service, desired_capabilities=caps, options=options
+                self.chromedriver_path, desired_capabilities=caps, options=options
             )
 
             logger.debug("opening https://in.tradingview.com ")
@@ -285,8 +277,7 @@ class TvDatafeed:
             return driver
 
         except Exception as e:
-            if driver is not None:
-                driver.quit()
+            driver.quit()
             logger.error(e)
 
     @staticmethod
