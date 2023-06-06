@@ -15,6 +15,7 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 from websocket import create_connection
 import sys
+from selenium.webdriver.common.by import By
 
 logger = logging.getLogger(__name__)
 
@@ -168,27 +169,20 @@ class TvDatafeed:
         else:
             try:
                 logger.debug("click sign in")
-                driver.find_element_by_class_name("tv-header__user-menu-button").click()
-                driver.find_element_by_xpath(
-                    '//*[@id="overlap-manager-root"]/div/span/div[1]/div/div/div[1]/div[2]/div'
+                driver.find_element(By.CLASS_NAME, "tv-header__user-menu-button").click()
+                driver.find_element(By.XPATH,
+                   '//*[@id="overlap-manager-root"]/div/span/div[1]/div/div/div/button[1]'
                 ).click()
 
                 time.sleep(5)
-                logger.debug("click email")
-                embutton = driver.find_element_by_class_name(
-                    "tv-signin-dialog__toggle-email"
-                )
-                embutton.click()
-                time.sleep(5)
-
                 logger.debug("entering credentials")
-                username_input = driver.find_element_by_name("username")
+                username_input = driver.find_element(By.NAME, "id_username")
                 username_input.send_keys(username)
-                password_input = driver.find_element_by_name("password")
+                password_input = driver.find_element(By.NAME, "id_password")
                 password_input.send_keys(password)
 
                 logger.debug("click login")
-                submit_button = driver.find_element_by_class_name("tv-button__loader")
+                submit_button = driver.find_element(By.XPATH, '/html/body/div[9]/div/div/div[1]/div/div[2]/div/div/div/form/button') 
                 submit_button.click()
                 time.sleep(5)
             except Exception as e:
