@@ -1,5 +1,10 @@
-setuptools~=49.2.0
-pandas~=1.0.5
-selenium~=3.141.0
-websocket-client~=0.57.0
-chromedriver-autoinstaller
+setuptools~=68.1.2
+pandas~=2.1.0
+selenium~=4.12.0
+websocket-client~=1.6.2
+chromedriver-autoinstaller~=0.6.2
+# pip install --upgrade --no-cache-dir --force-reinstall git+https://github.com/alxcancado/tvdatafeed.git
+# pip install --upgrade --no-cache-dir --force-reinstall selenium==4.12.0
+# pip install --upgrade --no-cache-dir --force-reinstall webdriver-manager==4.0.0
+# pip install --upgrade --no-cache-dir --force-reinstall numba==0.56.4
+# pip install --upgrade --no-cache-dir --force-reinstall numpy==1.23
